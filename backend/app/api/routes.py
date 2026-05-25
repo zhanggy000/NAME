@@ -15,6 +15,7 @@ from famous_names_corpus import get_famous_for_char  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.scoring import score_name  # noqa: E402
 from app.core.generator import generate_names, GenerateRequest  # noqa: E402
+from app.services.cache import get_json, make_cache_key, set_json  # noqa: E402
 from app.api.schemas import (
     BaziRequest, BaziResponse,
     GenerateNameRequest, GenerateNameResponse,
@@ -56,6 +57,11 @@ def api_bazi(req: BaziRequest):
 @router.post("/generate", response_model=GenerateNameResponse)
 def api_generate(req: GenerateNameRequest):
     """生成名字 Top N"""
+    cache_key = make_cache_key("generate", req.model_dump(mode="json"))
+    cached = get_json(cache_key)
+    if cached is not None:
+        return GenerateNameResponse(**cached)
+
     try:
         gr = GenerateRequest(
             surname=req.surname,
@@ -76,6 +82,7 @@ def api_generate(req: GenerateNameRequest):
     except Exception as e:
         raise HTTPException(500, f"生成失败: {e}")
 
+    set_json(cache_key, result, ttl_seconds=3600)
     return GenerateNameResponse(**result)
 
 

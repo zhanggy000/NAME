@@ -139,7 +139,7 @@
 | 3.4 | 实现 `POST /api/generate` — 输入偏好，返回 Top N 候选 | [x] | 2026-05-25 | Claude | |
 | 3.5 | 实现 `GET /api/character/{char}` — 单字详情（含名人、典籍引用） | [x] | 2026-05-25 | Claude | |
 | 3.6 | 实现 `POST /api/score` — 给定具体名字返回详细评分卡 | [x] | 2026-05-25 | Claude | |
-| 3.7 | 添加 Redis 缓存层（候选列表缓存） | [ ] | | | |
+| 3.7 | 添加 Redis 缓存层（候选列表缓存） | [x] | 2026-05-25 | Codex | generate 接口接入 Redis JSON 缓存，Redis 不可用时自动降级 |
 | 3.8 | 添加请求验证（pydantic schemas） | [x] | 2026-05-25 | Claude | backend/app/api/schemas.py |
 | 3.9 | 添加日志 + 错误处理中间件 | [x] | 2026-05-25 | Claude | loguru + middleware |
 | 3.10 | 生成 OpenAPI 文档 + 部署 `/docs` | [x] | 2026-05-25 | Claude | FastAPI 默认 /docs ✓ |
@@ -233,6 +233,7 @@
 | 2026-05-25 | 补充名人库来源说明，确认批量名人数据导入候选来源 | Codex | Phase 1 数据层 |
 | 2026-05-25 | 新增名人库导入脚本，支持名人入库与字到名人反向索引 | Codex | Phase 1 数据层 |
 | 2026-05-25 | 新增 SQLAlchemy engine/session 基础设施，完成后端数据库连接骨架 | Codex | Phase 3 后端 API |
+| 2026-05-25 | 新增 Redis 缓存封装并接入候选生成接口，支持失败降级 | Codex | Phase 3 后端 API |
 
 ---
 

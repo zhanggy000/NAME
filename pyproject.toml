@@ -1,0 +1,27 @@
+[project]
+name = "name"
+version = "0.1.0"
+description = "智能取名系统 · 综合八字命理 + 文化典籍 + AI 复审"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "backend",
+    "data/seed",
+]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+markers = [
+    "slow: 慢速测试",
+    "integration: 集成测试",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["E402", "E501"]

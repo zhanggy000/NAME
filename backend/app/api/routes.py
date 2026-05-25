@@ -10,6 +10,7 @@ _ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_ROOT / "data" / "seed"))
 
 from characters_seed import get_char  # noqa: E402
+from classics_corpus import get_classics_for_char  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.scoring import score_name  # noqa: E402
 from app.core.generator import generate_names, GenerateRequest  # noqa: E402
@@ -112,6 +113,20 @@ def api_character(ch: str):
     info = get_char(ch)
     if not info:
         raise HTTPException(404, f"字「{ch}」不在字库中")
+
+    # 合并两个来源的典籍引用：
+    #   1. characters_seed 的内联简版
+    #   2. classics_corpus 全文反查
+    inline_classics = info.get("classics_refs", [])
+    corpus_hits = get_classics_for_char(ch)
+    corpus_strs = [
+        f"《{r['book']}·{r['chapter']}》{r['line']}"
+        for r in corpus_hits
+    ]
+    # 简单去重：corpus_strs 更详细，优先
+    all_classics = corpus_strs + [c for c in inline_classics
+                                   if not any(c[:6] in cs for cs in corpus_strs)]
+
     return CharacterDetail(
         char=info["char"],
         pinyin=info["pinyin"],
@@ -123,6 +138,6 @@ def api_character(ch: str):
         meaning=info["meaning"],
         gender_pref=info["gender_pref"],
         style_tags=info.get("style_tags", []),
-        classics_refs=info.get("classics_refs", []),
+        classics_refs=all_classics,
         famous_refs=info.get("famous_refs", []),
     )

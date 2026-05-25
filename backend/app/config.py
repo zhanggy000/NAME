@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_file: str = "logs/app.log"
 
+    # Monitoring
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.1
+
 
 @lru_cache
 def get_settings() -> Settings:

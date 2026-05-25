@@ -68,6 +68,7 @@ data/name.db
 # Data dumps
 data/raw/
 data/cache/
+data/review/
 *.csv.bak
 
 # Misc

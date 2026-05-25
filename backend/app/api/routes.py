@@ -73,6 +73,7 @@ def api_generate(req: GenerateNameRequest):
             must_include_position=req.must_include_position,
             must_avoid=req.must_avoid,
             style_prefs=req.style_prefs,
+            weights=req.weights.model_dump() if req.weights else None,
             name_length=req.name_length,
             top_n=req.top_n,
         )
@@ -98,6 +99,7 @@ def api_score(req: ScoreRequest):
         ns = score_name(
             req.surname, req.given_chars, naming_wx,
             gender=req.gender, style_prefs=req.style_prefs,
+            weights=req.weights.model_dump() if req.weights else None,
         )
     except ValueError as e:
         raise HTTPException(400, str(e))

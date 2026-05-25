@@ -94,6 +94,20 @@ def test_score_specific_name(client):
     assert "bazi" in data["scores"]
 
 
+def test_score_custom_weights(client):
+    r = client.post("/api/score", json={
+        "surname": "张",
+        "given_chars": ["维", "城"],
+        "gender": "男",
+        "year": 2023, "month": 1, "day": 14,
+        "hour": 11, "minute": 33,
+        "weights": {"bazi": 1, "wuge": 0, "meaning": 0, "phonetic": 0, "visual": 0},
+    })
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total_score"] == data["scores"]["bazi"]["raw_score"]
+
+
 def test_character_query(client):
     r = client.get("/api/character/雯")
     assert r.status_code == 200

@@ -45,6 +45,7 @@ class GenerateRequest:
     must_include_position: Optional[Literal["first", "second", "any"]] = "any"
     must_avoid: Optional[list[str]] = None         # 必避字
     style_prefs: Optional[list[str]] = None        # 风格 ["典雅","大气"]
+    weights: Optional[dict[str, float]] = None     # 五维权重
     name_length: int = 2                            # 名字字数（不含姓）
     top_n: int = 10                                 # 返回前 N 个
 
@@ -188,6 +189,7 @@ def generate_names(req: GenerateRequest) -> dict:
                             [chars[0]["char"], chars[1]["char"]],
                             naming_wuxing, gender=req.gender,
                             style_prefs=req.style_prefs,
+                            weights=req.weights,
                         )
                         candidates.append(ns)
                     except ValueError:

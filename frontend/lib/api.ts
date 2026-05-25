@@ -15,7 +15,16 @@ export interface GenerateNameRequest {
   must_include?: string | null;
   must_include_position?: MustIncludePosition;
   style_prefs?: string[] | null;
+  weights?: ScoreWeights | null;
   top_n?: number;
+}
+
+export interface ScoreWeights {
+  bazi: number;
+  wuge: number;
+  meaning: number;
+  phonetic: number;
+  visual: number;
 }
 
 export interface DimensionScore {
@@ -68,6 +77,7 @@ export interface ScoreNameRequest {
   minute: number;
   is_lunar: boolean;
   style_prefs?: string[] | null;
+  weights?: ScoreWeights | null;
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {

@@ -5,6 +5,14 @@ from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
 
+class ScoreWeights(BaseModel):
+    bazi: float = Field(0.30, ge=0, le=1)
+    wuge: float = Field(0.25, ge=0, le=1)
+    meaning: float = Field(0.20, ge=0, le=1)
+    phonetic: float = Field(0.15, ge=0, le=1)
+    visual: float = Field(0.10, ge=0, le=1)
+
+
 # ============================================================
 # /api/bazi
 # ============================================================
@@ -51,6 +59,7 @@ class GenerateNameRequest(BaseModel):
     must_include_position: Optional[Literal["first", "second", "any"]] = "any"
     must_avoid: Optional[list[str]] = None
     style_prefs: Optional[list[str]] = None
+    weights: Optional[ScoreWeights] = None
     name_length: Literal[2] = 2
     top_n: int = Field(10, ge=1, le=50)
 
@@ -93,6 +102,7 @@ class ScoreRequest(BaseModel):
     minute: int = 0
     is_lunar: bool = False
     style_prefs: Optional[list[str]] = None
+    weights: Optional[ScoreWeights] = None
 
 
 class ScoreResponse(BaseModel):

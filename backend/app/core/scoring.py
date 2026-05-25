@@ -41,6 +41,30 @@ DEFAULT_WEIGHTS = {
 }
 
 
+def normalize_weights(weights: Optional[dict[str, float]] = None) -> dict[str, float]:
+    """归一化五维权重；未传时使用默认权重。"""
+    if not weights:
+        return DEFAULT_WEIGHTS.copy()
+
+    merged = DEFAULT_WEIGHTS.copy()
+    for key, value in weights.items():
+        if key in merged:
+            merged[key] = max(0.0, float(value))
+
+    total = sum(merged.values())
+    if total <= 0:
+        return DEFAULT_WEIGHTS.copy()
+    return {key: value / total for key, value in merged.items()}
+
+
+def apply_weights(scores: dict[str, "DimensionScore"], weights: dict[str, float]) -> float:
+    total = 0.0
+    for key, score in scores.items():
+        score.weighted_score = round(score.raw_score * weights[key], 2)
+        total += score.weighted_score
+    return round(total, 2)
+
+
 @dataclass
 class DimensionScore:
     """单维度评分结果"""
@@ -433,6 +457,7 @@ def score_name(
     naming_wuxing: dict,
     gender: str = "男",
     style_prefs: Optional[list[str]] = None,
+    weights: Optional[dict[str, float]] = None,
 ) -> NameScore:
     """
     给定姓+名+用神，返回完整五维评分。
@@ -443,6 +468,7 @@ def score_name(
         naming_wuxing: get_naming_wuxing(bazi) 的返回值
         gender: "男" or "女"
         style_prefs: 风格偏好标签 ["典雅", "大气"]
+        weights: 五维权重，允许传入非归一化值
     """
     # 1. 查字
     surname_info = get_char(surname)
@@ -470,9 +496,13 @@ def score_name(
     s_phonetic = score_phonetic(surname_info, char_infos)
     s_visual = score_visual(char_infos)
 
-    total = (s_bazi.weighted_score + s_wuge.weighted_score
-             + s_meaning.weighted_score + s_phonetic.weighted_score
-             + s_visual.weighted_score)
+    total = apply_weights({
+        "bazi": s_bazi,
+        "wuge": s_wuge,
+        "meaning": s_meaning,
+        "phonetic": s_phonetic,
+        "visual": s_visual,
+    }, normalize_weights(weights))
 
     return NameScore(
         full_name=surname + "".join(given_chars),

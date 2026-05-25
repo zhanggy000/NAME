@@ -5,6 +5,13 @@ import { generateNames, type GenerateNameResponse } from "@/lib/api";
 import { wuxingColor, scoreBadgeClass, cn } from "@/lib/utils";
 
 const STYLE_OPTIONS = ["典雅","大气","婉约","清新","古意","稳重","明朗","厚重","君子"];
+const WEIGHT_LABELS = {
+  bazi: "八字",
+  wuge: "五格",
+  meaning: "字义",
+  phonetic: "音律",
+  visual: "字形",
+} as const;
 
 function firstCharacter(value: string) {
   return Array.from(value).slice(0, 1).join("");
@@ -20,6 +27,14 @@ export default function HomePage() {
     must_include: "",
     must_include_position: "any" as "first"|"second"|"any",
     style_prefs: [] as string[],
+    custom_weights: false,
+    weights: {
+      bazi: 30,
+      wuge: 25,
+      meaning: 20,
+      phonetic: 15,
+      visual: 10,
+    },
     top_n: 10,
   });
   const [result, setResult] = useState<GenerateNameResponse | null>(null);
@@ -44,6 +59,15 @@ export default function HomePage() {
         must_include: form.must_include || null,
         must_include_position: form.must_include_position,
         style_prefs: form.style_prefs.length ? form.style_prefs : null,
+        weights: form.custom_weights
+          ? {
+              bazi: form.weights.bazi / 100,
+              wuge: form.weights.wuge / 100,
+              meaning: form.weights.meaning / 100,
+              phonetic: form.weights.phonetic / 100,
+              visual: form.weights.visual / 100,
+            }
+          : null,
         top_n: form.top_n,
       });
       setResult(res);
@@ -62,6 +86,18 @@ export default function HomePage() {
         : [...f.style_prefs, s],
     }));
   }
+
+  function updateWeight(key: keyof typeof WEIGHT_LABELS, value: number) {
+    setForm(f => ({
+      ...f,
+      weights: {
+        ...f.weights,
+        [key]: value,
+      },
+    }));
+  }
+
+  const totalWeight = Object.values(form.weights).reduce((sum, value) => sum + value, 0);
 
   return (
     <div className="space-y-10">
@@ -189,6 +225,41 @@ export default function HomePage() {
               >{s}</button>
             ))}
           </div>
+        </div>
+
+        <div className="md:col-span-2 border-t border-stone-200 dark:border-stone-800 pt-5">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.custom_weights}
+              onChange={e => setForm({...form, custom_weights: e.target.checked})}
+            />
+            高级权重
+            <span className="text-xs text-stone-500 font-normal">
+              合计 {totalWeight}%
+            </span>
+          </label>
+          {form.custom_weights && (
+            <div className="grid md:grid-cols-5 gap-3 mt-3">
+              {(Object.keys(WEIGHT_LABELS) as Array<keyof typeof WEIGHT_LABELS>).map(key => (
+                <label key={key} className="space-y-2 text-sm">
+                  <span className="flex justify-between">
+                    <span>{WEIGHT_LABELS[key]}</span>
+                    <span className="text-stone-500">{form.weights[key]}%</span>
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={60}
+                    step={5}
+                    value={form.weights[key]}
+                    onChange={e => updateWeight(key, Number(e.target.value))}
+                    className="w-full accent-stone-900 dark:accent-stone-100"
+                  />
+                </label>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="md:col-span-2 flex justify-end">

@@ -40,3 +40,14 @@ def test_meaning_classics_bonus():
     # 维城 出自《诗经》"宗子维城"
     s = score_name("张", ["维", "城"], WX_FIRE, gender="男")
     assert s.meaning.raw_score > 55  # 典籍加分体现
+
+
+def test_custom_weights_change_weighted_total():
+    default = score_name("张", ["维", "城"], WX_FIRE, gender="男")
+    custom = score_name(
+        "张", ["维", "城"], WX_FIRE, gender="男",
+        weights={"bazi": 1, "wuge": 0, "meaning": 0, "phonetic": 0, "visual": 0},
+    )
+
+    assert custom.total_score == custom.bazi.raw_score
+    assert custom.total_score != default.total_score

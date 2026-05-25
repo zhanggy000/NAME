@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS characters (
     style_tags TEXT NOT NULL DEFAULT '[]',
     classics_refs TEXT NOT NULL DEFAULT '[]',
     famous_refs TEXT NOT NULL DEFAULT '[]',
+    classics_count INTEGER NOT NULL DEFAULT 0,
+    famous_count INTEGER NOT NULL DEFAULT 0,
     is_common INTEGER NOT NULL DEFAULT 1,
     is_rare INTEGER NOT NULL DEFAULT 0,
     is_taboo INTEGER NOT NULL DEFAULT 0,
@@ -237,9 +239,17 @@ def parse_unihan_zip(zip_path: Path, limit: int = 5000) -> list[dict]:
 
 def init_sqlite(conn: sqlite3.Connection) -> None:
     conn.execute(CREATE_CHARACTERS_TABLE)
+    _ensure_column(conn, "characters", "classics_count", "INTEGER NOT NULL DEFAULT 0")
+    _ensure_column(conn, "characters", "famous_count", "INTEGER NOT NULL DEFAULT 0")
     for sql in CREATE_INDEXES:
         conn.execute(sql)
     conn.commit()
+
+
+def _ensure_column(conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+    columns = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def import_characters(conn: sqlite3.Connection, rows: Iterable[dict], data_source: str) -> int:

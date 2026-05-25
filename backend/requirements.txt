@@ -10,7 +10,7 @@ python-dotenv==1.0.1
 
 # 命理库
 lunar-python==1.4.4
-sxtwl==2.1.0
+sxtwl==2.0.7
 
 # LLM
 anthropic==0.39.0

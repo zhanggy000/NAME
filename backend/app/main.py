@@ -5,6 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import __version__
 from app.config import settings
 from app.api.routes import router as api_router
+from app.api.middleware import request_logging_middleware
+from app.core.logging_config import setup_logging
+
+
+logger = setup_logging(level=settings.log_level, log_file=settings.log_file)
 
 
 app = FastAPI(
@@ -21,7 +26,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 注册请求日志中间件
+app.middleware("http")(request_logging_middleware)
+
 app.include_router(api_router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info(f"NAME v{__version__} 启动 · env={settings.app_env}")
 
 
 @app.get("/")

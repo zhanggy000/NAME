@@ -11,6 +11,7 @@ sys.path.insert(0, str(_ROOT / "data" / "seed"))
 
 from characters_seed import get_char  # noqa: E402
 from classics_corpus import get_classics_for_char  # noqa: E402
+from famous_names_corpus import get_famous_for_char  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.scoring import score_name  # noqa: E402
 from app.core.generator import generate_names, GenerateRequest  # noqa: E402
@@ -123,9 +124,21 @@ def api_character(ch: str):
         f"《{r['book']}·{r['chapter']}》{r['line']}"
         for r in corpus_hits
     ]
-    # 简单去重：corpus_strs 更详细，优先
     all_classics = corpus_strs + [c for c in inline_classics
                                    if not any(c[:6] in cs for cs in corpus_strs)]
+
+    # 名人引用合并
+    inline_famous = info.get("famous_refs", [])
+    corpus_famous = get_famous_for_char(ch, limit=10)
+    corpus_famous_strs = [
+        f"{f['full_name']}（{f['era']}{f['category']}）"
+        for f in corpus_famous
+    ]
+    seen_names = {f.split("（")[0] for f in corpus_famous_strs}
+    all_famous = corpus_famous_strs + [
+        f for f in inline_famous
+        if not any(name in f for name in seen_names)
+    ]
 
     return CharacterDetail(
         char=info["char"],
@@ -139,5 +152,5 @@ def api_character(ch: str):
         gender_pref=info["gender_pref"],
         style_tags=info.get("style_tags", []),
         classics_refs=all_classics,
-        famous_refs=info.get("famous_refs", []),
+        famous_refs=all_famous,
     )

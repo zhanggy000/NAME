@@ -317,7 +317,16 @@ export default function HomePage() {
       )}
 
       {result && (
-        <div className="space-y-8">
+        <div className="space-y-8 print:space-y-5">
+          <div className="flex justify-end print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 text-sm"
+            >
+              导出 PDF
+            </button>
+          </div>
           {/* 八字概况 */}
           <div className="p-6 rounded-2xl border border-stone-200 dark:border-stone-800">
             <h2 className="font-serif-cn text-xl font-semibold mb-4">命盘速览</h2>

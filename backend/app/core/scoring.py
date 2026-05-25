@@ -23,6 +23,7 @@ sys.path.insert(0, str(_ROOT / "data" / "seed"))
 sys.path.insert(0, str(_ROOT / "backend"))
 
 from characters_seed import get_char  # noqa: E402
+from homophone_risks import check_homophone  # noqa: E402
 from app.core.wuge import compute_wuge, WugeResult  # noqa: E402
 
 
@@ -294,6 +295,21 @@ def score_phonetic(surname_info: dict, chars: list[dict]) -> DimensionScore:
     all_chars = [surname_info] + chars
     tones = [c["tone"] for c in all_chars]
     pinyins = [c["pinyin"] for c in all_chars]
+
+    # 谐音风险检测（高严重度直接重扣分）
+    full_name = "".join(c["char"] for c in all_chars)
+    risks = check_homophone(full_name)
+    for r in risks:
+        if r["severity"] == "high":
+            score -= 25
+            breakdown.append({"item": "谐音", "delta": -25,
+                             "reason": f"{r['language']}谐音「{r['sounds_like']}」（{r['category']}）"})
+        elif r["severity"] == "medium":
+            score -= 10
+            breakdown.append({"item": "谐音", "delta": -10,
+                             "reason": f"{r['language']}略谐音「{r['sounds_like']}」"})
+        else:
+            score -= 3
 
     # 1. 声调多样性
     if len(set(tones)) == 1:

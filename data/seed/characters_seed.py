@@ -16,6 +16,38 @@
 """
 
 CHARACTERS_SEED = [
+    # ============== 常见姓氏（用于五格计算）==============
+    {"char": "张", "pinyin": "zhāng", "tone": 1, "kangxi": 11, "simplified": 7,
+     "wuxing": "火", "radical": "弓", "meaning": "姓氏（張）",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "王", "pinyin": "wáng", "tone": 2, "kangxi": 4, "simplified": 4,
+     "wuxing": "土", "radical": "王", "meaning": "姓氏",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "李", "pinyin": "lǐ", "tone": 3, "kangxi": 7, "simplified": 7,
+     "wuxing": "木", "radical": "木", "meaning": "姓氏",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "刘", "pinyin": "liú", "tone": 2, "kangxi": 15, "simplified": 6,
+     "wuxing": "金", "radical": "刂", "meaning": "姓氏（劉）",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "陈", "pinyin": "chén", "tone": 2, "kangxi": 16, "simplified": 7,
+     "wuxing": "火", "radical": "阝", "meaning": "姓氏（陳）",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "杨", "pinyin": "yáng", "tone": 2, "kangxi": 13, "simplified": 7,
+     "wuxing": "木", "radical": "木", "meaning": "姓氏（楊）",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "黄", "pinyin": "huáng", "tone": 2, "kangxi": 12, "simplified": 11,
+     "wuxing": "土", "radical": "黄", "meaning": "姓氏（黃）",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "赵", "pinyin": "zhào", "tone": 4, "kangxi": 14, "simplified": 9,
+     "wuxing": "火", "radical": "走", "meaning": "姓氏（趙）",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "周", "pinyin": "zhōu", "tone": 1, "kangxi": 8, "simplified": 8,
+     "wuxing": "金", "radical": "口", "meaning": "姓氏",
+     "gender_pref": "中性", "style_tags": []},
+    {"char": "吴", "pinyin": "wú", "tone": 2, "kangxi": 7, "simplified": 7,
+     "wuxing": "木", "radical": "口", "meaning": "姓氏（吳）",
+     "gender_pref": "中性", "style_tags": []},
+
     # ============== 火 五行（暖局调候首选）==============
     {"char": "昊", "pinyin": "hào", "tone": 4, "kangxi": 8, "simplified": 8,
      "wuxing": "火", "radical": "日", "meaning": "广大天空",

@@ -134,7 +134,7 @@
 | # | 任务 | 状态 | 完成日期 | Agent | 备注 |
 |---|---|---|---|---|---|
 | 3.1 | 初始化 FastAPI 项目骨架 | [x] | 2026-05-25 | Claude | backend/app/main.py |
-| 3.2 | 配置 PostgreSQL 连接 + SQLAlchemy ORM | [ ] | | | 现用内存种子，DB 集成待 |
+| 3.2 | 配置 PostgreSQL 连接 + SQLAlchemy ORM | [x] | 2026-05-25 | Codex | 新增 db/session.py 与 Declarative Base；API 数据源切换待后续 repository |
 | 3.3 | 实现 `POST /api/bazi` — 输入生辰，返回八字+用神 | [x] | 2026-05-25 | Claude | |
 | 3.4 | 实现 `POST /api/generate` — 输入偏好，返回 Top N 候选 | [x] | 2026-05-25 | Claude | |
 | 3.5 | 实现 `GET /api/character/{char}` — 单字详情（含名人、典籍引用） | [x] | 2026-05-25 | Claude | |
@@ -232,6 +232,7 @@
 | 2026-05-25 | 新增典籍反向索引随机抽查验证脚本并完成 20 字验证 | Codex | Phase 1 数据层 |
 | 2026-05-25 | 补充名人库来源说明，确认批量名人数据导入候选来源 | Codex | Phase 1 数据层 |
 | 2026-05-25 | 新增名人库导入脚本，支持名人入库与字到名人反向索引 | Codex | Phase 1 数据层 |
+| 2026-05-25 | 新增 SQLAlchemy engine/session 基础设施，完成后端数据库连接骨架 | Codex | Phase 3 后端 API |
 
 ---
 

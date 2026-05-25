@@ -23,6 +23,7 @@ export default function RootLayout({
               <nav className="text-sm text-stone-500 space-x-6">
                 <a href="/" className="hover:text-stone-900 dark:hover:text-stone-100">取名</a>
                 <a href="/score" className="hover:text-stone-900 dark:hover:text-stone-100">评分</a>
+                <a href="/history" className="hover:text-stone-900 dark:hover:text-stone-100">历史</a>
                 <a href="/about" className="hover:text-stone-900 dark:hover:text-stone-100">关于</a>
               </nav>
             </div>

@@ -12,6 +12,7 @@ const WEIGHT_LABELS = {
   phonetic: "音律",
   visual: "字形",
 } as const;
+const HISTORY_KEY = "name_history";
 
 function firstCharacter(value: string) {
   return Array.from(value).slice(0, 1).join("");
@@ -72,6 +73,18 @@ export default function HomePage() {
         top_n: form.top_n,
       });
       setResult(res);
+      saveHistory({
+        id: `${Date.now()}`,
+        created_at: new Date().toISOString(),
+        surname: form.surname,
+        gender: form.gender,
+        birth: `${form.date} ${form.time}`,
+        must_include: form.must_include || "",
+        candidates: res.candidates.slice(0, 5).map(c => ({
+          full_name: c.full_name,
+          total_score: c.total_score,
+        })),
+      });
     } catch (err: any) {
       setError(err.message || "生成失败");
     } finally {
@@ -116,6 +129,12 @@ export default function HomePage() {
   }
 
   const totalWeight = Object.values(form.weights).reduce((sum, value) => sum + value, 0);
+
+  function saveHistory(entry: any) {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    const current = raw ? JSON.parse(raw) : [];
+    localStorage.setItem(HISTORY_KEY, JSON.stringify([entry, ...current].slice(0, 20)));
+  }
 
   return (
     <div className="space-y-10">

@@ -1,0 +1,17 @@
+.git
+.gitignore
+README.md
+REQUIREMENTS.md
+PROJECT_PLAN.md
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+venv
+.venv
+node_modules
+frontend
+tests
+docs
+.env
+*.log

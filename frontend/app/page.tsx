@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { generateNames, type GenerateNameResponse } from "@/lib/api";
+import { generateNames, getCharacter, type GenerateNameResponse } from "@/lib/api";
 import { wuxingColor, scoreBadgeClass, cn } from "@/lib/utils";
 
 const STYLE_OPTIONS = ["典雅","大气","婉约","清新","古意","稳重","明朗","厚重","君子"];
@@ -41,6 +41,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [charDetails, setCharDetails] = useState<Record<string, any>>({});
   const [isMustIncludeComposing, setIsMustIncludeComposing] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -94,6 +95,23 @@ export default function HomePage() {
         ...f.weights,
         [key]: value,
       },
+    }));
+  }
+
+  async function toggleCandidate(fullName: string, givenChars: string[]) {
+    const next = expanded === fullName ? null : fullName;
+    setExpanded(next);
+    if (!next) return;
+
+    const missing = givenChars.filter(ch => !charDetails[ch]);
+    if (!missing.length) return;
+
+    const entries = await Promise.all(
+      missing.map(async ch => [ch, await getCharacter(ch)] as const)
+    );
+    setCharDetails(current => ({
+      ...current,
+      ...Object.fromEntries(entries),
     }));
   }
 
@@ -345,7 +363,7 @@ export default function HomePage() {
                         {c.total_score.toFixed(1)}
                       </span>
                       <button
-                        onClick={() => setExpanded(expanded === c.full_name ? null : c.full_name)}
+                        onClick={() => toggleCandidate(c.full_name, c.given_chars)}
                         className="text-xs px-3 py-1 rounded border border-stone-300 dark:border-stone-700"
                       >
                         {expanded === c.full_name ? "收起" : "评分卡"}
@@ -382,6 +400,50 @@ export default function HomePage() {
                           </ul>
                         </div>
                       ))}
+                      <div>
+                        <div className="font-medium text-sm mb-2">同字名人</div>
+                        <div className="grid md:grid-cols-2 gap-3 text-xs">
+                          {c.given_chars.map(ch => {
+                            const detail = charDetails[ch];
+                            return (
+                              <div key={ch} className="rounded-lg bg-stone-50 dark:bg-stone-900 p-3">
+                                <div className="font-serif-cn text-lg font-bold mb-1">{ch}</div>
+                                {detail?.famous_refs?.length ? (
+                                  <ul className="space-y-1">
+                                    {detail.famous_refs.slice(0, 3).map((ref: string, idx: number) => (
+                                      <li key={idx}>{ref}</li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <div className="text-stone-500">暂无同字名人</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm mb-2">典籍出处</div>
+                        <div className="grid md:grid-cols-2 gap-3 text-xs">
+                          {c.given_chars.map(ch => {
+                            const detail = charDetails[ch];
+                            return (
+                              <div key={ch} className="rounded-lg bg-stone-50 dark:bg-stone-900 p-3">
+                                <div className="font-serif-cn text-lg font-bold mb-1">{ch}</div>
+                                {detail?.classics_refs?.length ? (
+                                  <ul className="space-y-1 leading-relaxed">
+                                    {detail.classics_refs.slice(0, 3).map((ref: string, idx: number) => (
+                                      <li key={idx}>{ref}</li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <div className="text-stone-500">暂无典籍出处</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

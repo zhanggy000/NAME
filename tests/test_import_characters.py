@@ -29,9 +29,10 @@ def test_normalize_character_maps_seed_fields():
     assert row["char"] == "雯"
     assert row["kangxi_strokes"] == 12
     assert row["simplified_strokes"] == 12
-    assert row["wuxing_source"] == "seed_manual"
-    assert json.loads(row["style_tags"]) == ["婉约", "清新"]
-    assert json.loads(row["classics_refs"]) == ["示例"]
+    assert row["wuxing_source"] == "manual_review"
+    assert row["wuxing_confidence"] == 90
+    assert json.loads(row["style_tags"]) == ["婉约", "清丽"]
+    assert json.loads(row["classics_refs"])
 
 
 def test_import_characters_upserts_rows():

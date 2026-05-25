@@ -17,6 +17,7 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "data" / "seed"))
 
+from character_reviews import REVIEWED_CHARACTERS  # noqa: E402
 from characters_seed import CHARACTERS_SEED  # noqa: E402
 
 PINYIN_TONE_MARKS = {
@@ -126,21 +127,34 @@ def normalize_character(raw: dict, data_source: str = "characters_seed") -> dict
     style_tags = raw.get("style_tags") or []
     is_surname = not style_tags and str(raw["meaning"]).startswith("姓氏")
 
+    reviewed = REVIEWED_CHARACTERS.get(raw["char"], {})
+    wuxing_source = reviewed.get("wuxing_source") or raw.get("wuxing_source") or "seed_manual"
+    wuxing_confidence = reviewed.get(
+        "wuxing_confidence",
+        raw.get("wuxing_confidence", 85 if not is_surname else 75),
+    )
+
     return {
         "char": raw["char"],
         "pinyin": raw["pinyin"],
         "tone": int(raw["tone"]),
         "kangxi_strokes": int(raw["kangxi"]),
         "simplified_strokes": int(raw["simplified"]),
-        "wuxing": raw["wuxing"],
-        "wuxing_source": raw.get("wuxing_source") or "seed_manual",
-        "wuxing_confidence": int(raw.get("wuxing_confidence", 85 if not is_surname else 75)),
+        "wuxing": reviewed.get("wuxing", raw["wuxing"]),
+        "wuxing_source": wuxing_source,
+        "wuxing_confidence": int(wuxing_confidence),
         "radical": raw.get("radical"),
-        "meaning_primary": raw["meaning"],
-        "gender_pref": raw.get("gender_pref", "中性"),
-        "style_tags": json.dumps(style_tags, ensure_ascii=False),
-        "classics_refs": json.dumps(raw.get("classics_refs") or [], ensure_ascii=False),
-        "famous_refs": json.dumps(raw.get("famous_refs") or [], ensure_ascii=False),
+        "meaning_primary": reviewed.get("meaning", raw["meaning"]),
+        "gender_pref": reviewed.get("gender_pref", raw.get("gender_pref", "中性")),
+        "style_tags": json.dumps(reviewed.get("style_tags", style_tags), ensure_ascii=False),
+        "classics_refs": json.dumps(
+            reviewed.get("classics_refs", raw.get("classics_refs") or []),
+            ensure_ascii=False,
+        ),
+        "famous_refs": json.dumps(
+            reviewed.get("famous_refs", raw.get("famous_refs") or []),
+            ensure_ascii=False,
+        ),
         "is_common": 1,
         "is_rare": int(raw.get("is_rare", False)),
         "is_taboo": int(raw.get("is_taboo", False)),

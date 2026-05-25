@@ -6,6 +6,10 @@ import { wuxingColor, scoreBadgeClass, cn } from "@/lib/utils";
 
 const STYLE_OPTIONS = ["典雅","大气","婉约","清新","古意","稳重","明朗","厚重","君子"];
 
+function firstCharacter(value: string) {
+  return Array.from(value).slice(0, 1).join("");
+}
+
 export default function HomePage() {
   const [form, setForm] = useState({
     surname: "张",
@@ -22,6 +26,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [isMustIncludeComposing, setIsMustIncludeComposing] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -139,8 +144,19 @@ export default function HomePage() {
             <input
               type="text"
               value={form.must_include}
-              onChange={e => setForm({...form, must_include: e.target.value.slice(0,1)})}
-              maxLength={1}
+              onChange={e => {
+                const value = e.target.value;
+                setForm({
+                  ...form,
+                  must_include: isMustIncludeComposing ? value : firstCharacter(value),
+                });
+              }}
+              onCompositionStart={() => setIsMustIncludeComposing(true)}
+              onCompositionEnd={e => {
+                setIsMustIncludeComposing(false);
+                setForm({...form, must_include: firstCharacter(e.currentTarget.value)});
+              }}
+              onBlur={e => setForm({...form, must_include: firstCharacter(e.target.value)})}
               placeholder="如：雯"
               className="w-24 px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-transparent text-center text-xl"
             />

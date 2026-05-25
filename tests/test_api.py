@@ -130,3 +130,16 @@ def test_invalid_surname(client):
         "hour": 12,
     })
     assert r.status_code == 400
+
+
+def test_generate_compound_surname(client):
+    r = client.post("/api/generate", json={
+        "surname": "欧阳",
+        "gender": "男",
+        "year": 2023, "month": 1, "day": 14,
+        "hour": 12,
+        "top_n": 3,
+    })
+    assert r.status_code == 200
+    data = r.json()
+    assert all(c["full_name"].startswith("欧阳") for c in data["candidates"])

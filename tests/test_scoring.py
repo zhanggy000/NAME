@@ -51,3 +51,11 @@ def test_custom_weights_change_weighted_total():
 
     assert custom.total_score == custom.bazi.raw_score
     assert custom.total_score != default.total_score
+
+
+def test_compound_surname_can_be_scored():
+    s = score_name("欧阳", ["维", "城"], WX_FIRE, gender="男")
+
+    assert s.full_name == "欧阳维城"
+    assert s.wuge_result["surname_strokes"] == 32
+    assert 0 <= s.total_score <= 100

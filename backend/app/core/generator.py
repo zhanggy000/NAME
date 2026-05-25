@@ -24,7 +24,7 @@ sys.path.insert(0, str(_ROOT / "backend"))
 from characters_seed import CHARACTERS_SEED, get_char, find_chars  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.wuge import compute_wuge  # noqa: E402
-from app.core.scoring import score_name, NameScore  # noqa: E402
+from app.core.scoring import score_name, NameScore, get_surname_info  # noqa: E402
 from app.services.llm_review import review_top_candidates  # noqa: E402
 
 
@@ -105,9 +105,7 @@ def generate_names(req: GenerateRequest) -> dict:
             raise ValueError(f"必含字「{req.must_include}」不在字库中")
 
     # === 步骤 4：笔画穷举 + 五行字筛选 ===
-    surname_info = get_char(req.surname)
-    if not surname_info:
-        raise ValueError(f"姓氏「{req.surname}」不在字库中")
+    surname_info = get_surname_info(req.surname)
     sn_strokes = surname_info["kangxi"]
 
     # 候选字池（按用神五行筛）

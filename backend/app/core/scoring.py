@@ -65,6 +65,35 @@ def apply_weights(scores: dict[str, "DimensionScore"], weights: dict[str, float]
     return round(total, 2)
 
 
+def get_surname_info(surname: str) -> dict:
+    """支持单姓和复姓的聚合姓氏信息。"""
+    if len(surname) == 1:
+        info = get_char(surname)
+        if not info:
+            raise ValueError(f"字库中找不到姓氏「{surname}」")
+        return info
+
+    parts = []
+    for char in surname:
+        info = get_char(char)
+        if not info:
+            raise ValueError(f"字库中找不到复姓「{surname}」中的「{char}」")
+        parts.append(info)
+
+    return {
+        "char": surname,
+        "pinyin": "".join(part["pinyin"] for part in parts),
+        "tone": parts[-1]["tone"],
+        "kangxi": sum(part["kangxi"] for part in parts),
+        "simplified": sum(part["simplified"] for part in parts),
+        "wuxing": parts[-1]["wuxing"],
+        "radical": parts[-1].get("radical"),
+        "meaning": "复姓",
+        "gender_pref": "中性",
+        "style_tags": [],
+    }
+
+
 @dataclass
 class DimensionScore:
     """单维度评分结果"""
@@ -471,9 +500,7 @@ def score_name(
         weights: 五维权重，允许传入非归一化值
     """
     # 1. 查字
-    surname_info = get_char(surname)
-    if not surname_info:
-        raise ValueError(f"字库中找不到姓氏「{surname}」")
+    surname_info = get_surname_info(surname)
 
     char_infos = []
     for c in given_chars:

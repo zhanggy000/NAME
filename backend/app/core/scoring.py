@@ -24,6 +24,8 @@ sys.path.insert(0, str(_ROOT / "backend"))
 
 from characters_seed import get_char  # noqa: E402
 from homophone_risks import check_homophone  # noqa: E402
+from classics_corpus import get_classics_for_char  # noqa: E402
+from famous_names_corpus import get_famous_for_char  # noqa: E402
 from app.core.wuge import compute_wuge, WugeResult  # noqa: E402
 
 
@@ -245,24 +247,50 @@ def score_meaning(chars: list[dict], style_prefs: Optional[list[str]] = None) ->
 
     for i, ch in enumerate(chars):
         pos = f"第{i+1}字「{ch['char']}」"
-        # 典籍出处加分
-        classics = ch.get("classics_refs") or []
-        if classics:
-            bonus = min(len(classics) * 6, 15)
+
+        # 典籍出处：先用 corpus 反查（更全），再合并 inline
+        corpus_hits = get_classics_for_char(ch["char"])
+        inline_classics = ch.get("classics_refs") or []
+        total_classics = len(corpus_hits) + len(inline_classics)
+
+        if corpus_hits:
+            bonus = min(len(corpus_hits) * 4 + len(inline_classics) * 2, 18)
+            score += bonus
+            first = corpus_hits[0]
+            ref_str = f"《{first['book']}·{first['chapter']}》"
+            breakdown.append({
+                "item": pos, "delta": +bonus,
+                "reason": f"典籍出处：{ref_str}" + (f" 等 {total_classics} 条" if total_classics > 1 else "")
+            })
+        elif inline_classics:
+            bonus = min(len(inline_classics) * 6, 15)
             score += bonus
             breakdown.append({
                 "item": pos, "delta": +bonus,
-                "reason": f"典籍出处：{classics[0]}" + (f" 等 {len(classics)} 条" if len(classics) > 1 else "")
+                "reason": f"典籍出处：{inline_classics[0]}"
             })
 
-        # 名人加分
-        famous = ch.get("famous_refs") or []
-        if famous:
-            bonus = min(len(famous) * 3, 8)
+        # 名人参照：corpus 反查（含 fame_score 权重）+ inline
+        corpus_famous = get_famous_for_char(ch["char"], limit=5)
+        inline_famous = ch.get("famous_refs") or []
+        if corpus_famous:
+            # fame 高的名人加分多
+            avg_fame = sum(f["fame_score"] for f in corpus_famous) / len(corpus_famous)
+            bonus = min(int(len(corpus_famous) * 2 + (avg_fame - 70) / 10), 10)
+            bonus = max(bonus, 2)
+            score += bonus
+            top_f = corpus_famous[0]
+            breakdown.append({
+                "item": pos, "delta": +bonus,
+                "reason": f"名人参照：{top_f['full_name']}（{top_f['era']}{top_f['category']}）"
+                          + (f" 等 {len(corpus_famous)} 位" if len(corpus_famous) > 1 else "")
+            })
+        elif inline_famous:
+            bonus = min(len(inline_famous) * 3, 8)
             score += bonus
             breakdown.append({
                 "item": pos, "delta": +bonus,
-                "reason": f"名人参照：{famous[0]}" + (f" 等 {len(famous)} 位" if len(famous) > 1 else "")
+                "reason": f"名人参照：{inline_famous[0]}"
             })
 
         # 风格匹配加分

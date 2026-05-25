@@ -60,7 +60,7 @@
 | 1.1 | 设计 `characters` 表 SQL schema（含康熙笔画、五行、读音、本义、引申义、性别偏好、谐音风险等字段） | [x] | 2026-05-25 | Claude | data/schema/01_characters.sql |
 | 1.2 | 收集康熙笔画数据源（开源 JSON / 汉典爬取） | [x] | 2026-05-25 | Codex | 已记录 docs/data_sources.md；种子已含 73 字手工录入，批量导入待做 |
 | 1.3 | 收集字五行数据源（多源对照：字源、字义、偏旁） | [x] | 2026-05-25 | Codex | 已记录 docs/data_sources.md；五行字段需 Top 1000 人工校对 |
-| 1.4 | 编写字典导入脚本 `scripts/import_characters.py` | [ ] | | | |
+| 1.4 | 编写字典导入脚本 `scripts/import_characters.py` | [x] | 2026-05-25 | Codex | 支持 seed → SQLite 导入，后续扩展外部 JSON/CSV 与 PostgreSQL |
 | 1.5 | 导入 5000+ 常用字到数据库 | [ ] | | | 现 73 字种子，目标 5000+ |
 | 1.6 | 人工校对 Top 1000 高频取名字段（五行 + 性别） | [ ] | | | |
 
@@ -223,6 +223,7 @@
 |---|---|---|---|
 | 2026-05-25 | 初版计划书创建 | Claude | 全部 |
 | 2026-05-25 | 补充数据源规划，完成康熙笔画与五行数据源收集项 | Codex | Phase 1 数据层 |
+| 2026-05-25 | 新增单字库导入脚本与 SQLite 导入测试 | Codex | Phase 1 数据层 |
 
 ---
 

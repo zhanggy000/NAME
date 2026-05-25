@@ -63,6 +63,7 @@ Thumbs.db
 *.db
 *.sqlite
 *.sqlite3
+data/name.db
 
 # Data dumps
 data/raw/

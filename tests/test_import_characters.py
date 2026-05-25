@@ -1,7 +1,14 @@
 import json
 import sqlite3
+import zipfile
 
-from scripts.import_characters import import_characters, init_sqlite, normalize_character
+from scripts.import_characters import (
+    import_characters,
+    init_sqlite,
+    normalize_character,
+    parse_marked_pinyin,
+    parse_unihan_zip,
+)
 
 
 def test_normalize_character_maps_seed_fields():
@@ -67,3 +74,38 @@ def test_import_characters_upserts_rows():
 
     assert count == 2
     assert wen == ("雯", "水", "女", "test")
+
+
+def test_parse_marked_pinyin_extracts_tone():
+    assert parse_marked_pinyin("wén") == ("wén", 2)
+    assert parse_marked_pinyin("zi") == ("zi", 5)
+
+
+def test_parse_unihan_zip_reads_iicore_rows(tmp_path):
+    zip_path = tmp_path / "Unihan.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr(
+            "Unihan_IRGSources.txt",
+            "\n".join([
+                "U+4E00\tkIICore\tAGTJ",
+                "U+4E00\tkTotalStrokes\t1",
+                "U+4E00\tkRSUnicode\t1.0",
+                "U+6C34\tkIICore\tAGTJ",
+                "U+6C34\tkTotalStrokes\t4",
+                "U+6C34\tkRSUnicode\t85.0",
+            ]),
+        )
+        zf.writestr(
+            "Unihan_Readings.txt",
+            "\n".join([
+                "U+4E00\tkMandarin\tyī",
+                "U+6C34\tkMandarin\tshuǐ",
+            ]),
+        )
+
+    rows = parse_unihan_zip(zip_path, limit=2)
+
+    assert [row["char"] for row in rows] == ["一", "水"]
+    assert rows[0]["tone"] == 1
+    assert rows[1]["wuxing"] == "水"
+    assert rows[1]["wuxing_confidence"] == 75

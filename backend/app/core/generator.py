@@ -25,6 +25,7 @@ from characters_seed import CHARACTERS_SEED, get_char, find_chars  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.wuge import compute_wuge  # noqa: E402
 from app.core.scoring import score_name, NameScore  # noqa: E402
+from app.services.llm_review import review_top_candidates  # noqa: E402
 
 
 @dataclass
@@ -210,11 +211,17 @@ def generate_names(req: GenerateRequest) -> dict:
         unique_candidates.append(ns)
 
     top = unique_candidates[: req.top_n]
+    top_dicts = [ns.to_dict() for ns in top]
+
+    # === LLM 复审（无 key 时自动降级为规则版亮点摘要）===
+    top_dicts = review_top_candidates(
+        top_dicts, bazi.to_dict(), naming_wuxing, max_count=req.top_n
+    )
 
     return {
         "bazi": bazi.to_dict(),
         "naming_wuxing": naming_wuxing,
-        "candidates": [ns.to_dict() for ns in top],
+        "candidates": top_dicts,
         "stats": {
             "pool_size": len(pool),
             "considered": considered,

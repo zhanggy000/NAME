@@ -15,6 +15,7 @@ const WEIGHT_LABELS = {
 const HISTORY_KEY = "name_history";
 const MODEL_SETTINGS_KEY = "name_model_settings";
 const SCORE_ORDER = ["bazi", "wuge", "meaning", "phonetic", "visual"] as const;
+const DEFAULT_TOP_N = 100;
 
 function firstCharacter(value: string) {
   return Array.from(value).slice(0, 1).join("");
@@ -38,7 +39,7 @@ export default function HomePage() {
       phonetic: 15,
       visual: 10,
     },
-    top_n: 50,
+    top_n: DEFAULT_TOP_N,
     llm: {
       provider: "deepseek" as "deepseek" | "anthropic" | "none",
       enabled: false,
@@ -109,7 +110,7 @@ export default function HomePage() {
         llm_api_key: null,
         llm_model: null,
         llm_base_url: null,
-        top_n: 50,
+        top_n: DEFAULT_TOP_N,
       };
 
       if (form.llm.remember) {
@@ -595,7 +596,7 @@ export default function HomePage() {
                           AI复审 {c.llm_score.toFixed(1)}
                         </span>
                       )}
-                      {c.highlight && (
+                      {(review || c.llm_score != null) && c.highlight && (
                         <span className="max-w-md text-xs leading-relaxed text-stone-500">{c.highlight}</span>
                       )}
                     </div>
@@ -626,11 +627,11 @@ export default function HomePage() {
                       </span>
                     ))}
                   </div>
-                  {(c.llm_score != null || c.highlight || c.issues?.length) && (
+                  {(review || c.llm_score != null) && (c.llm_score != null || c.highlight || c.issues?.length) && (
                     <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/70 p-3 text-xs leading-relaxed text-indigo-950 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-100">
                       <div className="mb-1 font-medium">AI 语感复审</div>
                       <div>
-                        {c.llm_score != null ? `复审分：${c.llm_score.toFixed(1)}。` : "未返回 AI 分数。"}
+                        {c.llm_score != null ? `复审分：${c.llm_score.toFixed(1)}。` : ""}
                         {c.highlight ? ` 亮点：${c.highlight}。` : ""}
                       </div>
                       {c.issues?.length ? (

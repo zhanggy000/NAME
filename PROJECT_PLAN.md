@@ -171,7 +171,7 @@
 |---|---|---|---|---|---|
 | 5.1 | 接入 Claude API（SDK 配置 + Key 管理） | [x] | 2026-05-25 | Claude | anthropic 0.39 通过 .env 配置 |
 | 5.2 | 设计复审 Prompt（语感、谐音、时代感、性别气质） | [x] | 2026-05-25 | Claude | SYSTEM_PROMPT 已写 |
-| 5.3 | 实现 `llm_review(candidates)` 函数 — 输入 Top 50，输出 Top 10 + 理由 | [x] | 2026-05-25 | Claude | review_top_candidates() |
+| 5.3 | 实现 `llm_review(candidates)` 函数 — 输入 Top 100，输出 Top 10 + 理由 | [x] | 2026-05-25 | Claude | review_top_candidates() |
 | 5.4 | 设计解释生成 Prompt（生成每名字的"一句话推荐理由"） | [x] | 2026-05-25 | Claude | highlight + issues 字段 |
 | 5.5 | 实现 Prompt Caching 降低成本 | [x] | 2026-05-25 | Claude | cache_control ephemeral |
 | 5.6 | 添加 LLM 失败的降级策略（仅返回规则评分） | [x] | 2026-05-25 | Claude | _rule_based_highlight() |
@@ -188,7 +188,7 @@
 | 6.4 | 邀请 5+ 用户做可用性测试，收集反馈 | [ ] | | | |
 | 6.5 | 性能优化：候选生成 < 2 秒 | [x] | 2026-05-25 | Codex | 新增性能测试，当前 Top 10 生成低于 2 秒 |
 | 6.6 | LLM 调用成本分析 + 优化（缓存命中率） | [x] | 2026-05-25 | Codex | docs/llm_cost.md 已记录调用边界、缓存策略、降级与监控指标 |
-| 6.7 | 数据准确性专家审核（请专业取名师过一遍 Top 50 案例） | [ ] | | | |
+| 6.7 | 数据准确性专家审核（请专业取名师过一遍 Top 100 案例） | [ ] | | | |
 | 6.8 | 边界情况处理（生僻姓氏、复姓、双胞胎等） | [x] | 2026-05-25 | Codex | 支持复姓基础评分/生成；生僻姓氏继续返回明确错误 |
 
 ---

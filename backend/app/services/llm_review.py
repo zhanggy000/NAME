@@ -151,7 +151,7 @@ def review_candidates_with_metadata(
     bazi: dict,
     naming_wuxing: dict,
     llm_config: dict,
-    max_count: int = 50,
+    max_count: int = 100,
 ) -> dict:
     """Run AI review and return prompt, raw model text, and parsed reviews."""
     if not candidates:

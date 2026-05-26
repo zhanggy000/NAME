@@ -66,7 +66,7 @@ class GenerateNameRequest(BaseModel):
     llm_model: Optional[str] = Field(None, max_length=80)
     llm_base_url: Optional[str] = Field(None, max_length=200)
     name_length: Literal[2] = 2
-    top_n: int = Field(10, ge=1, le=50)
+    top_n: int = Field(10, ge=1, le=100)
 
 
 class DimensionScoreModel(BaseModel):
@@ -104,7 +104,7 @@ class AiReviewRequest(BaseModel):
     llm_api_key: Optional[str] = Field(None, max_length=256)
     llm_model: Optional[str] = Field(None, max_length=80)
     llm_base_url: Optional[str] = Field(None, max_length=200)
-    max_count: int = Field(50, ge=1, le=50)
+    max_count: int = Field(100, ge=1, le=100)
 
 
 class AiReviewResponse(BaseModel):

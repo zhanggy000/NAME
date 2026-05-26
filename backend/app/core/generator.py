@@ -25,7 +25,6 @@ from characters_seed import CHARACTERS_SEED, get_char, find_chars  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.wuge import compute_wuge  # noqa: E402
 from app.core.scoring import score_name, NameScore, get_surname_info  # noqa: E402
-from app.services.llm_review import review_top_candidates  # noqa: E402
 
 
 TraceCallback = Callable[[str], None]
@@ -252,15 +251,6 @@ def _build_execution_trace(
         "第5步｜五维评分和排序：对通过过滤的名字计算八字、五格、字义、音律、字形五项分数。",
         f"  去重后还有 {len(unique_candidates)} 个候选。",
         f"  按总分排序后，返回前 {len(top_dicts)} 个。",
-        "",
-        (
-            "第6步｜语感复审："
-            + (
-                "用户已勾选使用 AI。AI 不重算八字五格，也不改规则总分；只按语感、谐音、时代感、性别气质、文化契合做复核。"
-                if (req.llm_config or {}).get("enabled")
-                else "用户未勾选使用 AI，本次不调用模型，只使用本地规则摘要。"
-            )
-        ),
         "",
         "候选名字逐项解释：",
     ]
@@ -597,34 +587,11 @@ def generate_names(
     _emit(trace_callback, f"排序完成：去重后 {len(unique_candidates)} 个候选，准备返回前 {len(top)} 个。")
     _emit(trace_callback, "多样性处理：Top 名单会限制同一个首字和同一种五行组合过度重复。")
 
-    # === LLM 复审（无 key 时自动降级为规则版亮点摘要）===
-    if (req.llm_config or {}).get("enabled"):
-        _emit(trace_callback, "第6步｜语感复审：用户已勾选使用 AI，准备调用配置的模型。")
-    else:
-        _emit(trace_callback, "第6步｜语感复审：用户未勾选使用 AI，跳过模型调用，使用本地规则摘要。")
-    top_dicts = review_top_candidates(
-        top_dicts, bazi.to_dict(), naming_wuxing,
-        max_count=req.top_n,
-        llm_config=req.llm_config,
-        trace_callback=trace_callback,
-    )
-    ai_reviewed = sum(1 for item in top_dicts[:req.top_n] if item.get("llm_score") is not None)
-    if ai_reviewed:
-        _emit(trace_callback, f"语感复审完成：AI 已返回 {ai_reviewed} 个名字的复审分、亮点和注意事项。")
-    else:
-        _emit(trace_callback, "语感复审完成：本次没有拿到 AI 分数，已使用本地规则摘要补齐。")
-
     for index, candidate in enumerate(top_dicts[: min(5, len(top_dicts))], 1):
-        ai_part = (
-            f"AI复审 {candidate['llm_score']}，"
-            if candidate.get("llm_score") is not None
-            else "AI复审 未返回，"
-        )
         _emit(
             trace_callback,
             (
                 f"Top {index}：{candidate['full_name']}，总分 {candidate['total_score']}；"
-                f"{ai_part}"
                 f"八字 {candidate['scores']['bazi']['raw_score']}，"
                 f"五格 {candidate['scores']['wuge']['raw_score']}，"
                 f"字义 {candidate['scores']['meaning']['raw_score']}，"

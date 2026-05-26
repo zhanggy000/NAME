@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+import json
+import queue
 import sys
+import threading
 from pathlib import Path
 
 # 确保可以 import 种子数据
@@ -15,10 +19,12 @@ from famous_names_corpus import get_famous_for_char  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.scoring import score_name  # noqa: E402
 from app.core.generator import generate_names, GenerateRequest  # noqa: E402
+from app.services.llm_review import review_candidates_with_metadata  # noqa: E402
 from app.services.cache import get_json, make_cache_key, set_json  # noqa: E402
 from app.api.schemas import (
     BaziRequest, BaziResponse,
     GenerateNameRequest, GenerateNameResponse,
+    AiReviewRequest, AiReviewResponse,
     ScoreRequest, ScoreResponse,
     CharacterDetail,
 )
@@ -59,7 +65,7 @@ def api_generate(req: GenerateNameRequest):
     """生成名字 Top N"""
     cache_key = make_cache_key("generate", req.model_dump(mode="json"))
     cached = get_json(cache_key)
-    if cached is not None:
+    if cached is not None and cached.get("trace"):
         return GenerateNameResponse(**cached)
 
     try:
@@ -74,6 +80,13 @@ def api_generate(req: GenerateNameRequest):
             must_avoid=req.must_avoid,
             style_prefs=req.style_prefs,
             weights=req.weights.model_dump() if req.weights else None,
+            llm_config={
+                "enabled": False,
+                "provider": req.llm_provider or "deepseek",
+                "api_key": "",
+                "model": req.llm_model or "",
+                "base_url": req.llm_base_url or "",
+            },
             name_length=req.name_length,
             top_n=req.top_n,
         )
@@ -85,6 +98,100 @@ def api_generate(req: GenerateNameRequest):
 
     set_json(cache_key, result, ttl_seconds=3600)
     return GenerateNameResponse(**result)
+
+
+@router.post("/generate/stream")
+def api_generate_stream(req: GenerateNameRequest):
+    """流式生成名字：边执行边输出中文日志，最后返回完整结果。"""
+    def make_generate_request() -> GenerateRequest:
+        return GenerateRequest(
+            surname=req.surname,
+            gender=req.gender,
+            year=req.year, month=req.month, day=req.day,
+            hour=req.hour, minute=req.minute,
+            is_lunar=req.is_lunar,
+            must_include=req.must_include,
+            must_include_position=req.must_include_position,
+            must_avoid=req.must_avoid,
+            style_prefs=req.style_prefs,
+            weights=req.weights.model_dump() if req.weights else None,
+            llm_config={
+                "enabled": False,
+                "provider": req.llm_provider or "deepseek",
+                "api_key": "",
+                "model": req.llm_model or "",
+                "base_url": req.llm_base_url or "",
+            },
+            name_length=req.name_length,
+            top_n=req.top_n,
+        )
+
+    def sse(event: str, data: dict) -> str:
+        payload = json.dumps(data, ensure_ascii=False)
+        return f"event: {event}\ndata: {payload}\n\n"
+
+    def event_stream():
+        events: queue.Queue[tuple[str, dict]] = queue.Queue()
+
+        def log(message: str) -> None:
+            events.put(("log", {"message": message}))
+
+        def run() -> None:
+            try:
+                result = generate_names(make_generate_request(), trace_callback=log)
+                events.put(("result", result))
+            except ValueError as exc:
+                events.put(("error", {"message": str(exc)}))
+            except Exception as exc:  # pragma: no cover - defensive streaming guard
+                events.put(("error", {"message": f"生成失败: {exc}"}))
+            finally:
+                events.put(("done", {}))
+
+        threading.Thread(target=run, daemon=True).start()
+        yield sse("log", {"message": "连接成功：浏览器已打开实时日志通道。"})
+
+        while True:
+            event, data = events.get()
+            yield sse(event, data)
+            if event == "done":
+                break
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream; charset=utf-8",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.post("/ai-review", response_model=AiReviewResponse)
+def api_ai_review(req: AiReviewRequest):
+    """用户主动点击后，才调用 AI 复核当前候选名单。"""
+    if req.llm_provider == "none":
+        raise HTTPException(400, "请选择一个 AI 供应商。")
+    if not req.llm_api_key:
+        raise HTTPException(400, "已选择 AI 复审，请先填写 API Key。")
+    try:
+        result = review_candidates_with_metadata(
+            [c.model_dump(mode="json") for c in req.candidates],
+            req.bazi,
+            req.naming_wuxing,
+            {
+                "enabled": True,
+                "provider": req.llm_provider or "deepseek",
+                "api_key": req.llm_api_key or "",
+                "model": req.llm_model or "",
+                "base_url": req.llm_base_url or "",
+            },
+            max_count=req.max_count,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except Exception as exc:
+        raise HTTPException(502, f"AI 复审失败: {exc}")
+    return AiReviewResponse(**result)
 
 
 @router.post("/score", response_model=ScoreResponse)

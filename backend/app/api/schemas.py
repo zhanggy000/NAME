@@ -60,6 +60,11 @@ class GenerateNameRequest(BaseModel):
     must_avoid: Optional[list[str]] = None
     style_prefs: Optional[list[str]] = None
     weights: Optional[ScoreWeights] = None
+    llm_provider: Optional[Literal["deepseek", "anthropic", "none"]] = "deepseek"
+    llm_enabled: bool = False
+    llm_api_key: Optional[str] = Field(None, max_length=256)
+    llm_model: Optional[str] = Field(None, max_length=80)
+    llm_base_url: Optional[str] = Field(None, max_length=200)
     name_length: Literal[2] = 2
     top_n: int = Field(10, ge=1, le=50)
 
@@ -78,6 +83,9 @@ class CandidateName(BaseModel):
     total_score: float
     scores: dict
     wuge_result: dict
+    llm_score: Optional[float] = None
+    highlight: Optional[str] = None
+    issues: list[str] = Field(default_factory=list)
 
 
 class GenerateNameResponse(BaseModel):
@@ -85,6 +93,27 @@ class GenerateNameResponse(BaseModel):
     naming_wuxing: dict
     candidates: list[CandidateName]
     stats: dict
+    trace: list[str] = Field(default_factory=list)
+
+
+class AiReviewRequest(BaseModel):
+    bazi: dict
+    naming_wuxing: dict
+    candidates: list[CandidateName]
+    llm_provider: Optional[Literal["deepseek", "anthropic", "none"]] = "deepseek"
+    llm_api_key: Optional[str] = Field(None, max_length=256)
+    llm_model: Optional[str] = Field(None, max_length=80)
+    llm_base_url: Optional[str] = Field(None, max_length=200)
+    max_count: int = Field(50, ge=1, le=50)
+
+
+class AiReviewResponse(BaseModel):
+    provider: str
+    model: str
+    prompt: dict
+    raw_response: str
+    reviews: list
+    candidates: list[CandidateName]
 
 
 # ============================================================

@@ -40,6 +40,9 @@ DEFAULT_WEIGHTS = {
     "visual":  0.10,
 }
 
+FEMININE_TAGS = {"婉约", "清丽", "柔美", "灵动", "美好", "清雅", "宁静", "梦幻", "温和"}
+MASCULINE_TAGS = {"大气", "刚毅", "厚重", "进取", "稳重", "开阔", "君子", "显赫"}
+
 
 def normalize_weights(weights: Optional[dict[str, float]] = None) -> dict[str, float]:
     """归一化五维权重；未传时使用默认权重。"""
@@ -172,34 +175,34 @@ def score_bazi(
             score += 18
             breakdown.append({
                 "item": pos, "delta": +18,
-                "reason": f"{wx}行 = 主用神 ✓"
+                "reason": f"{wx}行，符合主用神"
             })
         elif wx == secondary:
             score += 12
             breakdown.append({
                 "item": pos, "delta": +12,
-                "reason": f"{wx}行 = 次用神 ✓"
+                "reason": f"{wx}行，符合辅助用神"
             })
         elif wx in avoid:
             score -= 20
             breakdown.append({
                 "item": pos, "delta": -20,
-                "reason": f"{wx}行 = 忌神 ✗"
+                "reason": f"{wx}行，属于本次取名尽量避开的五行"
             })
         else:
             score += 3
             breakdown.append({
                 "item": pos, "delta": +3,
-                "reason": f"{wx}行 = 中性"
+                "reason": f"{wx}行，不属于主用神，也不属于忌神"
             })
 
     # 双字组合加分：若两字均补用神
     char_wx = [c["wuxing"] for c in chars]
     if all(w == primary for w in char_wx):
-        score += 5
+        score += 2
         breakdown.append({
-            "item": "整体", "delta": +5,
-            "reason": "双字均补主用神，调候力度极强"
+            "item": "整体", "delta": +2,
+            "reason": "两个字都补主用神，但为避免过度偏向单一五行，只做小幅加分"
         })
     elif primary in char_wx and secondary in char_wx:
         score += 4
@@ -294,12 +297,61 @@ def score_wuge_sancai(wuge: WugeResult, gender: str = "男") -> DimensionScore:
 # ============================================================
 # ③ 字义寓意评分（0-100，权重 20%）
 # ============================================================
-def score_meaning(chars: list[dict], style_prefs: Optional[list[str]] = None) -> DimensionScore:
+def score_meaning(
+    chars: list[dict],
+    style_prefs: Optional[list[str]] = None,
+    gender: str = "男",
+) -> DimensionScore:
     breakdown = []
     score = 50.0  # 基础分
+    has_gender_anchor = False
 
     for i, ch in enumerate(chars):
         pos = f"第{i+1}字「{ch['char']}」"
+        tags = set(ch.get("style_tags", []))
+
+        if gender == "女":
+            feminine_hits = tags & FEMININE_TAGS
+            masculine_hits = tags & MASCULINE_TAGS
+            if ch.get("gender_pref") == "女":
+                score += 10
+                has_gender_anchor = True
+                breakdown.append({
+                    "item": pos, "delta": +10,
+                    "reason": "性别气质匹配：女名专用或明显适合女名"
+                })
+            elif feminine_hits:
+                bonus = min(len(feminine_hits) * 4, 8)
+                score += bonus
+                has_gender_anchor = True
+                breakdown.append({
+                    "item": pos, "delta": +bonus,
+                    "reason": f"女性气质标签：{','.join(sorted(feminine_hits))}"
+                })
+            if masculine_hits:
+                penalty = min(len(masculine_hits) * 4, 8)
+                score -= penalty
+                breakdown.append({
+                    "item": pos, "delta": -penalty,
+                    "reason": f"女名略偏阳刚：{','.join(sorted(masculine_hits))}"
+                })
+        else:
+            masculine_hits = tags & MASCULINE_TAGS
+            if ch.get("gender_pref") == "男":
+                score += 4
+                has_gender_anchor = True
+                breakdown.append({
+                    "item": pos, "delta": +4,
+                    "reason": "性别气质匹配：男名用字"
+                })
+            elif masculine_hits:
+                bonus = min(len(masculine_hits) * 2, 4)
+                score += bonus
+                has_gender_anchor = True
+                breakdown.append({
+                    "item": pos, "delta": +bonus,
+                    "reason": f"男名气质标签：{','.join(sorted(masculine_hits))}"
+                })
 
         # 典籍出处：先用 corpus 反查（更全），再合并 inline
         corpus_hits = get_classics_for_char(ch["char"])
@@ -348,14 +400,20 @@ def score_meaning(chars: list[dict], style_prefs: Optional[list[str]] = None) ->
 
         # 风格匹配加分
         if style_prefs:
-            tags = ch.get("style_tags", [])
-            matches = set(tags) & set(style_prefs)
+            matches = tags & set(style_prefs)
             if matches:
                 score += len(matches) * 2
                 breakdown.append({
                     "item": pos, "delta": +len(matches)*2,
                     "reason": f"风格匹配：{','.join(matches)}"
                 })
+
+    if gender == "女" and not has_gender_anchor:
+        score -= 15
+        breakdown.append({
+            "item": "整体气质", "delta": -15,
+            "reason": "女名缺少婉约、清丽、柔美等明确气质落点"
+        })
 
     raw = max(0.0, min(100.0, score))
     return DimensionScore(
@@ -519,7 +577,7 @@ def score_name(
     # 3. 五维评分
     s_bazi = score_bazi(char_infos, naming_wuxing)
     s_wuge = score_wuge_sancai(wuge, gender)
-    s_meaning = score_meaning(char_infos, style_prefs)
+    s_meaning = score_meaning(char_infos, style_prefs, gender)
     s_phonetic = score_phonetic(surname_info, char_infos)
     s_visual = score_visual(char_infos)
 

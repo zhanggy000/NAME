@@ -4,6 +4,8 @@ import { useState } from "react";
 import { scoreName } from "@/lib/api";
 import { cn, scoreBadgeClass, wuxingColor } from "@/lib/utils";
 
+const SCORE_ORDER = ["bazi", "wuge", "meaning", "phonetic", "visual"] as const;
+
 export default function ScorePage() {
   const [form, setForm] = useState({
     surname: "张",
@@ -119,9 +121,53 @@ export default function ScorePage() {
             </div>
           </div>
 
+          <div className="mb-6 border-y border-stone-200 dark:border-stone-800 py-5">
+            <h2 className="font-serif-cn text-xl font-semibold mb-3">运行逻辑</h2>
+            <div className="grid md:grid-cols-4 gap-3 text-sm">
+              <div className="rounded-lg bg-stone-50 dark:bg-stone-900 p-3">
+                <div className="text-xs text-stone-500 mb-1">1. 八字排盘</div>
+                <div className="font-mono">{result.bazi.bazi_string}</div>
+                <div className="text-xs text-stone-500 mt-1">
+                  {result.bazi.day_master}日主 · {result.bazi.birth_month_zhi ?? result.bazi.month_zhi}月
+                </div>
+              </div>
+              <div className="rounded-lg bg-stone-50 dark:bg-stone-900 p-3">
+                <div className="text-xs text-stone-500 mb-1">2. 取名用神</div>
+                <span className={cn("px-2 py-0.5 rounded font-bold", wuxingColor(result.naming_wuxing.primary))}>
+                  {result.naming_wuxing.primary}
+                </span>
+                <span className="mx-1 text-stone-400">/</span>
+                <span className={cn("px-2 py-0.5 rounded", wuxingColor(result.naming_wuxing.secondary))}>
+                  {result.naming_wuxing.secondary}
+                </span>
+              </div>
+              <div className="rounded-lg bg-stone-50 dark:bg-stone-900 p-3">
+                <div className="text-xs text-stone-500 mb-1">3. 三才五格</div>
+                <div className="font-mono">
+                  天{result.wuge_result.tiange} 人{result.wuge_result.renge} 地{result.wuge_result.dige}
+                  {" "}外{result.wuge_result.waige} 总{result.wuge_result.zongge}
+                </div>
+                <div className="text-xs text-stone-500 mt-1">
+                  三才 {result.wuge_result.sancai_heaven}-{result.wuge_result.sancai_person}-{result.wuge_result.sancai_earth}
+                  · {result.wuge_result.sancai_relation?.rating}
+                </div>
+              </div>
+              <div className="rounded-lg bg-stone-50 dark:bg-stone-900 p-3">
+                <div className="text-xs text-stone-500 mb-1">4. 综合计分</div>
+                <div className="font-medium">Σ（原始分 × 权重）</div>
+                <div className="text-xs text-stone-500 mt-1">下方逐项列出加分和扣分来源。</div>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-stone-500 leading-relaxed">
+              {result.naming_wuxing.reasoning}
+            </p>
+          </div>
+
           <div className="space-y-4">
-            {Object.entries(result.scores as Record<string, any>).map(([k, v]) => (
-              <div key={k}>
+            {SCORE_ORDER.map(key => {
+              const v = result.scores[key];
+              return (
+              <div key={key}>
                 <div className="flex justify-between mb-2">
                   <span className="font-medium">{v.name}</span>
                   <span className="text-sm text-stone-500">
@@ -144,7 +190,8 @@ export default function ScorePage() {
                   ))}
                 </ul>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

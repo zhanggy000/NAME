@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Callable, Optional, Literal
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -29,6 +30,7 @@ from app.core.scoring import score_name, NameScore, get_surname_info  # noqa: E4
 
 TraceCallback = Callable[[str], None]
 POOL_PREVIEW_LIMIT = 100
+NAME_DB_PATH = _ROOT / "data" / "name.db"
 
 # When the primary and secondary naming elements collapse to the same element
 # (for example winter Ren water wants fire twice), the generator expands the
@@ -72,11 +74,34 @@ def _format_trace_delta(delta: float | int) -> str:
     return f"+{delta}" if delta >= 0 else str(delta)
 
 
+def _load_name_char_frequency() -> dict[str, int]:
+    """Load real given-name character frequencies when the local DB is present."""
+    if not NAME_DB_PATH.exists():
+        return {}
+    try:
+        with sqlite3.connect(NAME_DB_PATH) as conn:
+            rows = conn.execute("SELECT char, total_count FROM name_char_stats").fetchall()
+    except sqlite3.Error:
+        return {}
+    return {char: int(total_count) for char, total_count in rows}
+
+
+def _name_char_stats_summary(freq: dict[str, int]) -> dict:
+    seed_chars = {c["char"] for c in CHARACTERS_SEED}
+    naming_seed_chars = {c["char"] for c in CHARACTERS_SEED if c.get("style_tags")}
+    return {
+        "stats_chars": len(freq),
+        "stats_with_seed_metadata": len(seed_chars & set(freq)),
+        "stats_with_naming_metadata": len(naming_seed_chars & set(freq)),
+    }
+
+
 def _pool_summary(
     req: GenerateRequest,
     target_wuxings: list[str],
     avoid_wuxings: list[str],
     pool: list[dict],
+    name_freq: Optional[dict[str, int]] = None,
 ) -> dict:
     """Summarize how the character pool was narrowed for trace output."""
     unique_targets = [wx for i, wx in enumerate(target_wuxings)
@@ -97,10 +122,12 @@ def _pool_summary(
 
     final_chars = {c["char"] for c in pool}
     removed = [c for c in target_chars if c["char"] not in final_chars]
+    stats_summary = _name_char_stats_summary(name_freq or {})
     return {
         "total_seed": len(CHARACTERS_SEED),
         "naming_chars": len(naming_chars),
         "gender_chars": len(gender_chars),
+        **stats_summary,
         "target_chars": len(target_chars),
         "final_chars": len(pool),
         "removed_chars": [c["char"] for c in removed],
@@ -176,7 +203,8 @@ def _build_execution_trace(
     reject_stats: dict[str, int],
 ) -> list[str]:
     """Build a Chinese console-style trace that mirrors the real generation pipeline."""
-    summary = _pool_summary(req, target_wuxings, avoid_wuxings, pool)
+    name_freq = _load_name_char_frequency()
+    summary = _pool_summary(req, target_wuxings, avoid_wuxings, pool, name_freq=name_freq)
     preview_count = min(POOL_PREVIEW_LIMIT, len(pool))
     preview = " ".join(c["char"] for c in pool[:POOL_PREVIEW_LIMIT])
     total_pairs = considered + reject_stats["same_char"]
@@ -215,6 +243,12 @@ def _build_execution_trace(
         f"  当前种子字库总共有 {summary['total_seed']} 个字。",
         f"  其中标记为可取名的字有 {summary['naming_chars']} 个。",
         f"  适合「{req.gender}」或中性的可取名字有 {summary['gender_chars']} 个。",
+        (
+            f"  真实名用字统计库已有 {summary['stats_chars']} 个字；"
+            f"其中 {summary['stats_with_seed_metadata']} 个已有完整五行/康熙/字义元数据，"
+            f"{summary['stats_with_naming_metadata']} 个已标记为可直接进入生成器。"
+        ),
+        "  说明：真实姓名频率只能证明这个字被用作名字；进入生成器还必须补齐五行、康熙笔画、字义、性别气质和禁忌校对。",
         "  性别处理：候选池排除明确异性的字；评分时会按名字气质是否匹配性别继续加减分。",
         (
             f"  本次用神主方向是「{naming_wuxing['primary']}」，"
@@ -320,6 +354,12 @@ def _filter_chars_by_wuxing_pool(
     return pool
 
 
+def _sort_pool_by_name_frequency(pool: list[dict], name_freq: dict[str, int]) -> list[dict]:
+    if not name_freq:
+        return pool
+    return sorted(pool, key=lambda ch: (-name_freq.get(ch["char"], 0), ch["kangxi"], ch["char"]))
+
+
 def generate_names(
     req: GenerateRequest,
     trace_callback: Optional[TraceCallback] = None,
@@ -409,7 +449,9 @@ def generate_names(
         target_wuxings, req.gender, req.style_prefs,
         exclude=avoid_set,
     )
-    summary = _pool_summary(req, target_wuxings, avoid_wuxings, pool)
+    name_freq = _load_name_char_frequency()
+    pool = _sort_pool_by_name_frequency(pool, name_freq)
+    summary = _pool_summary(req, target_wuxings, avoid_wuxings, pool, name_freq=name_freq)
     _emit(
         trace_callback,
         (
@@ -418,6 +460,16 @@ def generate_names(
             f"适合「{req.gender}」或中性的可取名字 {summary['gender_chars']} 个。"
         ),
     )
+    if summary["stats_chars"]:
+        _emit(
+            trace_callback,
+            (
+                f"真实名用字统计库已有 {summary['stats_chars']} 个字；"
+                f"其中 {summary['stats_with_seed_metadata']} 个已有完整取名元数据，"
+                f"{summary['stats_with_naming_metadata']} 个已标记为可直接进入生成器。"
+                " 当前不会直接使用未校对的频率字，避免缺五行、缺字义或含禁忌字。"
+            ),
+        )
     _emit(
         trace_callback,
         (

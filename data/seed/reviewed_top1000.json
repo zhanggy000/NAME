@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "description": "人工校对的 Top 1000 取名常用字。导入 SQLite 时优先级最高，覆盖 characters_seed.py 和 Unihan 批量数据。每条评审进入 git，换机/换 agent 不丢失。完整字段说明见 scripts/apply_reviews.py。",
+  "reviews": []
+}

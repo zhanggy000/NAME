@@ -18,6 +18,7 @@
 \echo '✓ famous_names + character_famous'
 
 \i 04_rules.sql
+\i 05_name_char_stats.sql
 \echo '✓ 81数理 + 调候用神 + 易经 + 谐音风险'
 
 \echo '=== 全部 schema 创建完成 ==='

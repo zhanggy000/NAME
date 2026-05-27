@@ -4,6 +4,13 @@
 
 ## 单字库
 
+### 真实名用字频率
+
+| 数据集 | 来源 | 用途 | 许可/风险 | 导入策略 |
+|---|---|---|---|---|
+| ChinAPIs `given_name_df` | CRAN / ChinAPIs，Chinese Name Database 1930-2008 派生整理 | 2614 个真实中文名用字，含男女频次、年代频次、总体频率、情感/温暖/能力评分 | ChinAPIs 为 MIT 许可；仍需在发布说明中保留来源 | `scripts/fetch_chinapis_given_names.py` 下载 CRAN 包并导出 CSV，`scripts/import_name_char_stats.py` 汇总到 `name_char_stats` |
+| Wikidata 名人姓名 | Wikidata / Wikipedia | 名人姓名拆字证据、样例名、知名度权重 | CC BY-SA；需过滤译名、争议人物和非中文姓名 | 仅作为辅助证据，不直接替代人工可取名字库 |
+
 | 数据域 | 首选来源 | 用途 | 许可/风险 | 导入策略 |
 |---|---|---|---|---|
 | Unicode 编码、基础笔画 | Unicode Unihan Database | `char`、基础笔画、普通话读音参考 | Unicode 数据许可，适合作为基础字段来源 | 下载 Unihan zip，解析 `Unihan_DictionaryLikeData.txt`、`Unihan_Readings.txt` |

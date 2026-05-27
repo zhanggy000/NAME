@@ -15,18 +15,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "data" / "seed"))
 
 from famous_names_corpus import FAMOUS_NAMES  # noqa: E402
+from chinese_surnames import (  # noqa: E402
+    CHINESE_COMPOUND_SURNAMES as COMPOUND_SURNAMES,
+    is_chinese_surname,
+)
 
 DEFAULT_WIKIDATA_JSONL = ROOT / "data" / "raw" / "wikidata_famous.jsonl"
-
-# 常见复姓（用于切分 surname/given_name）
-COMPOUND_SURNAMES = {
-    "欧阳", "司马", "诸葛", "上官", "司徒", "慕容", "皇甫", "长孙", "尉迟",
-    "公孙", "东方", "西门", "南宫", "夏侯", "宇文", "完颜", "钟离", "司空",
-    "万俟", "闻人", "赫连", "澹台", "公冶", "宗政", "濮阳", "淳于", "单于",
-    "太叔", "申屠", "颛孙", "端木", "巫马", "段干", "百里", "东郭", "南门",
-    "羊舌", "梁丘", "左丘", "东门", "西门", "微生", "梁丘", "拓跋", "独孤",
-    "令狐", "纳兰", "爱新觉罗",
-}
 
 OCC_CATEGORY = [
     (("诗人", "诗"), "诗人"),
@@ -152,6 +146,14 @@ def split_name(full_name: str) -> tuple[str, str]:
 
 def is_chinese(text: str) -> bool:
     return bool(text) and all("一" <= c <= "鿿" for c in text)
+
+
+def is_chinese_person_name(full_name: str) -> bool:
+    """判断是不是中国人名：所有字符为汉字 + 姓氏在百家姓里。"""
+    if not is_chinese(full_name) or len(full_name) < 2 or len(full_name) > 6:
+        return False
+    ok, _, given = is_chinese_surname(full_name)
+    return ok and bool(given)
 
 
 def map_gender(label: str | None) -> str:
@@ -281,7 +283,7 @@ def import_wikidata(conn: sqlite3.Connection, jsonl_path: Path) -> tuple[int, in
                     continue
                 raw = json.loads(line)
                 full_name = clean_full_name(raw.get("label_zh", ""))
-                if not is_chinese(full_name) or len(full_name) < 2 or len(full_name) > 6:
+                if not is_chinese_person_name(full_name):
                     skipped += 1
                     continue
                 surname, given_name = split_name(full_name)

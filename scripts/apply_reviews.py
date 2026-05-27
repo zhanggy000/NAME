@@ -39,19 +39,27 @@ REVIEW_JSON = ROOT / "data" / "seed" / "reviewed_top1000.json"
 VALID_WUXING = {"木", "火", "土", "金", "水"}
 VALID_GENDER = {"男", "女", "中性"}
 
-UPDATE_SQL = """
-UPDATE characters
-SET wuxing = :wuxing,
-    wuxing_source = 'manual_review',
-    wuxing_confidence = :wuxing_confidence,
-    meaning_primary = :meaning,
-    gender_pref = :gender_pref,
-    style_tags = :style_tags,
-    classics_refs = :classics_refs,
-    famous_refs = :famous_refs,
-    data_source = 'manual_review',
+UPSERT_SQL = """
+INSERT INTO characters (
+    char, pinyin, tone, kangxi_strokes, simplified_strokes, wuxing,
+    wuxing_source, wuxing_confidence, radical, meaning_primary, gender_pref,
+    style_tags, classics_refs, famous_refs, is_common, is_rare, is_taboo, data_source
+) VALUES (
+    :char, :pinyin, :tone, :kangxi, :simplified, :wuxing,
+    :wuxing_source, :wuxing_confidence, :radical, :meaning, :gender_pref,
+    :style_tags, :classics_refs, :famous_refs, 1, 0, 0, :data_source
+)
+ON CONFLICT(char) DO UPDATE SET
+    wuxing = excluded.wuxing,
+    wuxing_source = excluded.wuxing_source,
+    wuxing_confidence = excluded.wuxing_confidence,
+    meaning_primary = excluded.meaning_primary,
+    gender_pref = excluded.gender_pref,
+    style_tags = excluded.style_tags,
+    classics_refs = excluded.classics_refs,
+    famous_refs = excluded.famous_refs,
+    data_source = excluded.data_source,
     updated_at = CURRENT_TIMESTAMP
-WHERE char = :char
 """
 
 
@@ -86,8 +94,18 @@ def validate(row: dict) -> list[str]:
 
 
 def normalize_for_db(row: dict) -> dict:
+    is_bootstrap = row.get("reviewer") == "auto_bootstrap_v1"
+    source = "auto_bootstrap" if is_bootstrap else "manual_review"
+    wuxing_source = "auto_bootstrap" if is_bootstrap else "manual_review"
     return {
         "char": row["char"],
+        "pinyin": row.get("pinyin", ""),
+        "tone": int(row.get("tone", 5)),
+        "kangxi": int(row.get("kangxi", 0)) if row.get("kangxi") else 0,
+        "simplified": int(row.get("simplified", row.get("kangxi", 0)) or 0),
+        "radical": row.get("radical"),
+        "data_source": source,
+        "wuxing_source": wuxing_source,
         "wuxing": row["wuxing"],
         "wuxing_confidence": int(row.get("wuxing_confidence", 95)),
         "meaning": row["meaning"],
@@ -158,7 +176,7 @@ def apply_to_db(sqlite_path: Path) -> int:
         cur = conn.cursor()
         affected = 0
         for p in payloads:
-            cur.execute(UPDATE_SQL, p)
+            cur.execute(UPSERT_SQL, p)
             affected += cur.rowcount
         conn.commit()
     print(f"已将 {len(payloads)} 条评审应用到 {sqlite_path}（影响 {affected} 行）")

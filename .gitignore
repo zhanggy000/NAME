@@ -76,3 +76,4 @@ data/review/
 # Misc
 *.tmp
 *.bak
+.claude/

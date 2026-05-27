@@ -251,11 +251,19 @@ def upsert_one(conn: sqlite3.Connection, record: dict, source: str) -> int | Non
     return name_id
 
 
-def import_seed(conn: sqlite3.Connection) -> int:
+def import_famous_names(
+    conn: sqlite3.Connection,
+    rows: list[tuple],
+    source: str = "famous_seed",
+) -> int:
+    """从元组列表导入名人（保留旧接口，供测试和外部脚本调用）。
+
+    rows 每项：(full_name, surname, given_name, category, era, gender, brief, fame_score)
+    """
     count = 0
     with conn:
         conn.execute("PRAGMA foreign_keys = ON")
-        for full_name, surname, given_name, category, era, gender, brief, fame_score in FAMOUS_NAMES:
+        for full_name, surname, given_name, category, era, gender, brief, fame_score in rows:
             rec = {
                 "full_name": full_name,
                 "surname": surname,
@@ -266,9 +274,13 @@ def import_seed(conn: sqlite3.Connection) -> int:
                 "brief": brief,
                 "fame_score": fame_score,
             }
-            if upsert_one(conn, rec, source="famous_seed") is not None:
+            if upsert_one(conn, rec, source=source) is not None:
                 count += 1
     return count
+
+
+def import_seed(conn: sqlite3.Connection) -> int:
+    return import_famous_names(conn, FAMOUS_NAMES, source="famous_seed")
 
 
 def import_wikidata(conn: sqlite3.Connection, jsonl_path: Path) -> tuple[int, int]:

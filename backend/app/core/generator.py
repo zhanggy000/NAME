@@ -22,7 +22,8 @@ _ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_ROOT / "data" / "seed"))
 sys.path.insert(0, str(_ROOT / "backend"))
 
-from characters_seed import CHARACTERS_SEED, get_char, find_chars  # noqa: E402
+from characters_seed import CHARACTERS_SEED  # noqa: E402 (仅用于追踪展示种子规模)
+from app.core.character_repo import get_char, find_chars, repo_stats  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.wuge import compute_wuge  # noqa: E402
 from app.core.scoring import score_name, NameScore, get_surname_info  # noqa: E402

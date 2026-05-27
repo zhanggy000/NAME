@@ -22,7 +22,7 @@ _ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_ROOT / "data" / "seed"))
 sys.path.insert(0, str(_ROOT / "backend"))
 
-from characters_seed import get_char  # noqa: E402
+from app.core.character_repo import get_char  # noqa: E402
 from homophone_risks import check_homophone  # noqa: E402
 from classics_corpus import get_classics_for_char  # noqa: E402
 from famous_names_corpus import get_famous_for_char  # noqa: E402

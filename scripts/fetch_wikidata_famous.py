@@ -33,15 +33,63 @@ HEADERS = {
 }
 
 TIERS = [
-    (200, None),
-    (100, 200),
+    (100, None),
     (50, 100),
     (30, 50),
     (20, 30),
     (15, 20),
-    (12, 15),
-    (10, 12),
-    (8, 10),
+    (10, 15),
+    (7, 10),
+    (5, 7),
+    (3, 5),
+]
+
+# 中国国籍/历史朝代 Wikidata QID。覆盖现代 + 主要朝代。
+# PRC, ROC(Taiwan), Hong Kong, Macao, Tang, Song, Yuan, Ming, Qing, Han, Sui,
+# Five Dynasties, Sixteen Kingdoms, Northern/Southern, Three Kingdoms (Wei/Shu/Wu),
+# Jin (晋), Spring-Autumn states (周, 鲁, 齐, 楚, 秦, 晋, 燕, 韩, 赵, 魏),
+# Xia, Shang, Zhou, plus generic "China" / 中华文化 fallback.
+CHINA_CITIZENSHIP_QIDS = [
+    "Q148",     # 中华人民共和国
+    "Q865",     # 中华民国
+    "Q8646",    # 香港
+    "Q14773",   # 澳门
+    "Q29520",   # 中华民国（大陆时期）
+    "Q8733",    # 清朝
+    "Q9903",    # 明朝
+    "Q7568",    # 元朝
+    "Q15098",   # 宋朝（也含北宋/南宋）
+    "Q132985",  # 北宋
+    "Q220602",  # 南宋
+    "Q186053",  # 唐朝
+    "Q38450",   # 隋朝
+    "Q200464",  # 五代十国
+    "Q170895",  # 汉朝（也含西汉东汉）
+    "Q39992",   # 东汉
+    "Q43473",   # 西汉
+    "Q43773",   # 三国
+    "Q48863",   # 曹魏
+    "Q53618",   # 蜀汉
+    "Q62309",   # 孙吴
+    "Q9903",    # 明朝
+    "Q11567",   # 西晋
+    "Q19108",   # 东晋
+    "Q56776",   # 南北朝
+    "Q1849805", # 周朝
+    "Q9899",    # 秦朝
+    "Q29999",   # 春秋
+    "Q43287",   # 战国
+    "Q570",     # 古代中国
+    "Q56781",   # 商朝
+    "Q47683",   # 夏朝
+    "Q310890",  # 楚国
+    "Q204940",  # 齐国
+    "Q484663",  # 鲁国
+    "Q204426",  # 燕国
+    "Q57679",   # 赵国
+    "Q201515",  # 魏国（战国）
+    "Q43084",   # 韩国（战国）
+    "Q12544",   # 满洲国
 ]
 
 PREFIXES = """
@@ -52,9 +100,13 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <http://schema.org/>
 """
 
+CITIZENSHIP_VALUES = " ".join(f"wd:{qid}" for qid in CHINA_CITIZENSHIP_QIDS)
+
 QUERY_TEMPLATE = PREFIXES + """
 SELECT ?person ?personLabel ?sitelinks ?birth ?death ?genderLabel ?occLabel ?description WHERE {{
-  ?person wdt:P31 wd:Q5 ;
+  VALUES ?citizenship {{ {citizenship} }}
+  ?person wdt:P27 ?citizenship ;
+          wdt:P31 wd:Q5 ;
           wikibase:sitelinks ?sitelinks ;
           rdfs:label ?personLabel .
   FILTER(LANG(?personLabel) = "zh")
@@ -99,7 +151,9 @@ def http_get(url: str, params: dict, retries: int = 3) -> dict:
 
 def run_query(lo: int, hi: int | None) -> list[dict]:
     hi_clause = f" && ?sitelinks < {hi}" if hi else ""
-    query = QUERY_TEMPLATE.format(lo=lo, hi_clause=hi_clause)
+    query = QUERY_TEMPLATE.format(
+        lo=lo, hi_clause=hi_clause, citizenship=CITIZENSHIP_VALUES
+    )
     data = http_get(ENDPOINT, {"query": query})
     return data.get("results", {}).get("bindings", [])
 

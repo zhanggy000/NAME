@@ -66,10 +66,12 @@ Thumbs.db
 data/name.db
 
 # Data dumps
-data/raw/
+data/raw/*
 data/cache/
 data/review/
 *.csv.bak
+# 例外：把可重现但慢的原始数据集 pin 在 git 里，clone 后跑 import 即可重建 DB
+!data/raw/wikidata_famous.jsonl
 
 # Misc
 *.tmp

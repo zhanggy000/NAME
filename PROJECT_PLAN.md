@@ -27,14 +27,14 @@
 | 阶段 | 任务数 | 已完成 | 进度 |
 |---|---|---|---|
 | Phase 0 · 项目初始化 | 6 | 6 | 100% ✅ |
-| Phase 1 · 数据层 | 18 | 16 | 89% |
+| Phase 1 · 数据层 | 18 | 17 | 94% |
 | Phase 2 · 算法核心 | 15 | 15 | 100% ✅ |
 | Phase 3 · 后端 API | 10 | 10 | 100% ✅ |
 | Phase 4 · 前端界面 | 12 | 12 | 100% ✅ |
 | Phase 5 · LLM 集成 | 6 | 6 | 100% ✅ |
 | Phase 6 · 测试 & 优化 | 8 | 5 | 62% |
 | Phase 7 · 部署 & 上线 | 5 | 3 | 60% |
-| **合计** | **80** | **73** | **91%** |
+| **合计** | **80** | **74** | **93%** |
 
 ---
 
@@ -80,7 +80,7 @@
 | 1.11 | 设计 `famous_names` + `character_famous` 表 schema | [x] | 2026-05-25 | Claude | data/schema/03_famous_names.sql |
 | 1.12 | 收集名人数据源（维基 / 百度百科 / 演艺人员名录） | [x] | 2026-05-25 | Codex | docs/famous_sources.md 已记录 Wikidata/Wikipedia/公开名单与 seed 策略 |
 | 1.13 | 编写名人导入脚本，按"字→名人列表"建索引 | [x] | 2026-05-25 | Codex | 支持 famous seed → SQLite，并自动重建 character_famous |
-| 1.14 | 导入至少 1 万名人记录 | [ ] | | | |
+| 1.14 | 导入至少 1 万名人记录 | [x] | 2026-05-27 | Claude | Wikidata QLever 镜像 + P27 国籍/朝代过滤 + 百家姓校验，14593 位中国名人入库；原始 jsonl pin 在 data/raw/ |
 
 ### 1.D 数理 + 命理规则库
 
@@ -245,6 +245,9 @@
 | 2026-05-25 | 更新项目进度总览，当前 80 项完成 72 项 | Codex | 全部 |
 | 2026-05-25 | 新增可选 Sentry 错误监控配置 | Codex | Phase 7 部署上线 |
 | 2026-05-25 | 更新项目进度总览，当前 80 项完成 73 项 | Codex | 全部 |
+| 2026-05-27 | 数据层接通运行时：character_repo / refs_repo（SQLite 优先 + seed 回退 + LRU） | Claude | 数据层 + 算法层 |
+| 2026-05-27 | Top1000 单字校对持久化底座：reviewed_top1000.json + export/apply 双脚本 | Claude | Phase 1.6 准备 |
+| 2026-05-27 | Wikidata 名人入库：14593 位中国名人 / 25458 条字反查索引（最高频字 明 237 位） | Claude | Phase 1.14 完成 |
 
 ---
 

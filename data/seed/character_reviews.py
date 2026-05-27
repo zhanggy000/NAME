@@ -45,17 +45,28 @@ def _load_json_reviews() -> dict[str, dict]:
     out: dict[str, dict] = {}
     for row in reviews:
         char = row["char"]
+        reviewer = row.get("reviewer") or ""
+        # auto_bootstrap 是机器引导，置信度中等；
+        # 其它 reviewer 视为人工校对，置信度高。
+        if reviewer.startswith("auto_bootstrap"):
+            source = "auto_bootstrap"
+            review_status = "auto"
+            default_conf = 60
+        else:
+            source = "manual_review"
+            review_status = "reviewed"
+            default_conf = 95
         out[char] = {
             "wuxing": row["wuxing"],
-            "wuxing_source": "manual_review",
-            "wuxing_confidence": int(row.get("wuxing_confidence", 95)),
+            "wuxing_source": source,
+            "wuxing_confidence": int(row.get("wuxing_confidence", default_conf)),
             "gender_pref": row.get("gender_pref", "中性"),
             "meaning": row["meaning"],
             "style_tags": row.get("style_tags", []),
             "classics_refs": row.get("classics_refs", []),
             "famous_refs": row.get("famous_refs", []),
-            "review_status": "reviewed",
-            "reviewer": row.get("reviewer"),
+            "review_status": review_status,
+            "reviewer": reviewer,
             "reviewed_at": row.get("reviewed_at"),
         }
     return out

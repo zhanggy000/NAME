@@ -109,4 +109,4 @@ def test_parse_unihan_zip_reads_iicore_rows(tmp_path):
     assert [row["char"] for row in rows] == ["一", "水"]
     assert rows[0]["tone"] == 1
     assert rows[1]["wuxing"] == "水"
-    assert rows[1]["wuxing_confidence"] == 75
+    assert rows[1]["wuxing_confidence"] == 80

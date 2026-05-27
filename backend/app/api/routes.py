@@ -13,9 +13,8 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_ROOT / "data" / "seed"))
 
-from characters_seed import get_char  # noqa: E402
-from classics_corpus import get_classics_for_char  # noqa: E402
-from famous_names_corpus import get_famous_for_char  # noqa: E402
+from app.core.character_repo import get_char  # noqa: E402
+from app.core.refs_repo import get_classics_for_char, get_famous_for_char  # noqa: E402
 from app.core.bazi import compute_bazi, get_naming_wuxing  # noqa: E402
 from app.core.scoring import score_name  # noqa: E402
 from app.core.generator import generate_names, GenerateRequest  # noqa: E402

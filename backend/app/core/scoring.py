@@ -23,9 +23,8 @@ sys.path.insert(0, str(_ROOT / "data" / "seed"))
 sys.path.insert(0, str(_ROOT / "backend"))
 
 from app.core.character_repo import get_char  # noqa: E402
+from app.core.refs_repo import get_classics_for_char, get_famous_for_char  # noqa: E402
 from homophone_risks import check_homophone  # noqa: E402
-from classics_corpus import get_classics_for_char  # noqa: E402
-from famous_names_corpus import get_famous_for_char  # noqa: E402
 from app.core.wuge import compute_wuge, WugeResult  # noqa: E402
 
 
